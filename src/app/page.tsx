@@ -1,69 +1,81 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Camera, Images, Sparkles } from "lucide-react";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="bg-soft-grid flex flex-1 flex-col items-center justify-between px-4 py-8 sm:py-12">
+      <div />
+
+      {/* Kartu Utama */}
+      <div className="w-full max-w-md rounded-[2rem] border-4 border-slate-900 bg-white p-7 text-center shadow-[8px_8px_0px_#0f172a] sm:p-9">
+        <div className="mx-auto mb-3 inline-flex items-center gap-1.5 rounded-full border-2 border-slate-900 bg-amber-300 px-4 py-1 text-xs font-extrabold uppercase tracking-wider text-slate-900">
+          <Sparkles className="h-3.5 w-3.5" />
+          ConnectFrame GSJA
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          Abadikan Momen Bersama!
+        </h1>
+        <p className="mt-2 text-sm font-medium text-slate-600 sm:text-base">
+          Pilih frame favoritmu, foto 4 gaya seru, lalu simpan ke HP atau bagikan ke galeri gereja.
+        </p>
+
+        {/* Tombol Kamera Utama */}
+        <div className="my-7 flex flex-col items-center">
+          <Link
+            href="/booth"
+            className="animate-soft-pulse flex h-28 w-28 items-center justify-center rounded-full border-4 border-slate-900 bg-sky-400 text-slate-950 shadow-[4px_4px_0px_#0f172a] transition hover:bg-sky-300 active:translate-y-0.5"
+            aria-label="Mulai Foto"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <Camera className="h-12 w-12 stroke-[2.4]" />
+          </Link>
+
+          <Link
+            href="/booth"
+            className="mt-4 inline-flex min-h-[48px] items-center justify-center rounded-full border-2 border-slate-900 bg-slate-900 px-7 py-2.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-[3px_3px_0px_#f43f5e] transition hover:bg-slate-800"
           >
-            Documentation
-          </a>
+            Klik Untuk Mulai Foto
+          </Link>
         </div>
-      </main>
-    </div>
+
+        {/* Alur 3 Langkah Singkat */}
+        <div className="grid grid-cols-3 gap-2 rounded-2xl bg-amber-50/80 p-3 text-xs font-bold text-slate-700">
+          <div className="flex flex-col items-center gap-1">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-300 text-slate-900">
+              1
+            </span>
+            <span>Pilih Frame</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-300 text-slate-900">
+              2
+            </span>
+            <span>Foto 4 Gaya</span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-300 text-slate-900">
+              3
+            </span>
+            <span>Simpan HD</span>
+          </div>
+        </div>
+
+        {/* Tombol Galeri Bersama */}
+        <Link
+          href="/gallery"
+          className="mt-5 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-slate-50 px-5 py-3 text-sm font-extrabold text-slate-800 transition hover:border-slate-300 hover:bg-slate-100"
+        >
+          <Images className="h-4 w-4 text-sky-600" />
+          Lihat Galeri Bersama
+        </Link>
+      </div>
+
+      {/* Footer halus untuk Admin */}
+      <footer className="mt-8 text-center text-xs text-slate-400">
+        <Link href="/admin" className="underline-offset-4 hover:text-slate-600 hover:underline">
+          Panel Admin (Kelola Frame)
+        </Link>
+      </footer>
+    </main>
   );
 }
