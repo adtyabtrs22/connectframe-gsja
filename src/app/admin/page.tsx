@@ -69,7 +69,7 @@ export default function AdminPage() {
           </div>
           <h1 className="text-xl font-black text-slate-900">Panel Admin Gereja</h1>
           <p className="mt-1 text-xs text-slate-500">
-            Masukkan PIN Admin untuk mengelola frame &amp; galeri. (Default: 1234)
+            Masukkan PIN Admin untuk mengelola frame &amp; galeri.
           </p>
 
           <input
