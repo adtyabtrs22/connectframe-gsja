@@ -60,7 +60,7 @@ export function FramePreviewCard({ frame, selected, onSelect }: FramePreviewCard
               isDark ? "text-slate-200" : "text-slate-600"
             }`}
           >
-            GSJA EL SHADDAI BATU KAJANG
+            CONNECTFRAME • GSJA EL SHADDAI
           </div>
         )}
       </div>

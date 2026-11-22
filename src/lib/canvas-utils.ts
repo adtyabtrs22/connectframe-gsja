@@ -125,7 +125,7 @@ export async function renderPhotostripCanvas(
     ctx.fillStyle = isDark ? "#F8FAFC" : "#1E293B";
     ctx.font = "bold 40px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(options?.footerText || "GSJA EL SHADDAI BATU KAJANG", width / 2, height - 125);
+    ctx.fillText(options?.footerText || "CONNECTFRAME • GSJA EL SHADDAI", width / 2, height - 125);
 
     ctx.fillStyle = isDark ? "#94A3B8" : "#64748B";
     ctx.font = "500 26px sans-serif";

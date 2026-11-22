@@ -249,7 +249,7 @@ export async function generatePhotostripVideo(
         ctx.fillStyle = isDark ? "#F8FAFC" : "#1E293B";
         ctx.font = "bold 30px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("GSJA EL SHADDAI BATU KAJANG", width / 2, height - 85);
+        ctx.fillText("CONNECTFRAME • GSJA EL SHADDAI", width / 2, height - 85);
       }
 
       if (elapsed < totalDurationMs) {
