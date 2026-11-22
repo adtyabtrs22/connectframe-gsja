@@ -9,9 +9,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ConnectFrame GSJA — Connecting Community",
+  title: "GSJA El Shaddai Batu Kajang — Terang Dalam Kegelapan",
   description:
-    "Photobooth online gereja: pilih frame, foto 4 gaya, simpan ke HP, dan bagikan ke galeri bersama.",
+    "Photobooth Natal GSJA El Shaddai Batu Kajang — Terang Dalam Kegelapan. Pilih frame, foto 4 gaya, simpan ke HP, dan bagikan ke galeri bersama.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

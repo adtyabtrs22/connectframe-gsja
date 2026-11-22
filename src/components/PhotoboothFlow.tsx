@@ -21,6 +21,7 @@ import { FrameTemplate } from "@/types/photobooth";
 import { fetchAllFrames, uploadGalleryPhoto } from "@/lib/supabase";
 import { compressCanvasForGallery, renderPhotostripCanvas } from "@/lib/canvas-utils";
 import { generatePhotostripVideo } from "@/lib/video-utils";
+import { getCssFilter, PHOTO_FILTERS, PhotoFilterId } from "@/lib/filters";
 import { FramePreviewCard } from "@/components/FramePreviewCard";
 import { BUILT_IN_FRAMES } from "@/lib/default-frames";
 
@@ -54,6 +55,7 @@ export function PhotoboothFlow() {
   const [recordingVideo, setRecordingVideo] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [randomOrder, setRandomOrder] = useState<number[]>([2, 0, 3, 1]);
+  const [selectedFilter, setSelectedFilter] = useState<PhotoFilterId>("none");
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -300,16 +302,23 @@ export function PhotoboothFlow() {
     []
   );
 
-  // Render hasil HD ketika masuk ke step "result" atau saat ganti frame
+  // Render hasil HD ketika masuk ke step "result", ganti frame, atau ganti filter
   const generateResult = useCallback(
-    async (frameToUse: FrameTemplate, orderOverride?: number[]) => {
+    async (
+      frameToUse: FrameTemplate,
+      orderOverride?: number[],
+      filterOverride?: PhotoFilterId
+    ) => {
       setRenderingResult(true);
       setUploadedToGallery(false);
       setUploadError(null);
       try {
         const order = orderOverride ?? randomOrder;
+        const cssFilter = getCssFilter(filterOverride ?? selectedFilter);
         const expandedPhotos = expandForFrame(photos, frameToUse, order);
-        const canvas = await renderPhotostripCanvas(frameToUse, expandedPhotos);
+        const canvas = await renderPhotostripCanvas(frameToUse, expandedPhotos, {
+          filter: cssFilter,
+        });
         resultCanvasRef.current = canvas;
         setResultDataUrl(canvas.toDataURL("image/png"));
       } catch (err) {
@@ -318,7 +327,7 @@ export function PhotoboothFlow() {
         setRenderingResult(false);
       }
     },
-    [photos, randomOrder, expandForFrame]
+    [photos, randomOrder, selectedFilter, expandForFrame]
   );
 
   const goToResult = async () => {
@@ -361,7 +370,8 @@ export function PhotoboothFlow() {
         expandedPhotos,
         expandedVideos,
         expandedMirrored,
-        (pct) => setVideoProgress(pct)
+        (pct) => setVideoProgress(pct),
+        getCssFilter(selectedFilter)
       );
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -760,6 +770,32 @@ export function PhotoboothFlow() {
                     {uploadError}
                   </p>
                 )}
+              </div>
+
+              {/* Filter Warna Foto */}
+              <div className="border-t border-slate-100 pt-4">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Filter Warna Foto
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {PHOTO_FILTERS.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedFilter(f.id);
+                        generateResult(selectedFrame, undefined, f.id);
+                      }}
+                      className={`min-h-[42px] rounded-xl border px-3 py-2 text-xs font-bold transition ${
+                        selectedFilter === f.id
+                          ? "border-sky-500 bg-sky-50 text-sky-800 ring-2 ring-sky-200"
+                          : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Ganti Frame Cepat */}

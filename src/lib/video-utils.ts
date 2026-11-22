@@ -50,7 +50,8 @@ function drawMediaCover(
   dw: number,
   dh: number,
   borderRadius = 12,
-  mirror = false
+  mirror = false,
+  filter?: string
 ) {
   if (!mediaW || !mediaH) return;
   const imgRatio = mediaW / mediaH;
@@ -72,6 +73,7 @@ function drawMediaCover(
   ctx.beginPath();
   ctx.roundRect(dx, dy, dw, dh, borderRadius);
   ctx.clip();
+  ctx.filter = filter && filter !== "none" ? filter : "none";
   if (mirror) {
     ctx.translate(dx + dw, dy);
     ctx.scale(-1, 1);
@@ -91,7 +93,8 @@ export async function generatePhotostripVideo(
   photoDataUrls: (string | null)[],
   photoVideoBlobs: (Blob | null)[],
   slotMirrored: boolean[],
-  onProgress?: (pct: number) => void
+  onProgress?: (pct: number) => void,
+  filter?: string
 ): Promise<{ blob: Blob; ext: "mp4" | "webm" }> {
   const height = 1280;
   const rawWidth = Math.round(height * ((frame.canvasWidth || 680) / (frame.canvasHeight || 1920)));
@@ -217,7 +220,8 @@ export async function generatePhotostripVideo(
               dw,
               dh,
               frameImg ? 0 : 18,
-              Boolean(slotMirrored[layer.slotIndex])
+              Boolean(slotMirrored[layer.slotIndex]),
+              filter
             );
           } else if (photoImg) {
             drawMediaCover(
@@ -230,7 +234,8 @@ export async function generatePhotostripVideo(
               dw,
               dh,
               frameImg ? 0 : 18,
-              false
+              false,
+              filter
             );
           } else {
             ctx.fillStyle = "#E2E8F0";
@@ -244,7 +249,7 @@ export async function generatePhotostripVideo(
         ctx.fillStyle = isDark ? "#F8FAFC" : "#1E293B";
         ctx.font = "bold 30px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("CONNECTFRAME GSJA", width / 2, height - 85);
+        ctx.fillText("GSJA EL SHADDAI BATU KAJANG", width / 2, height - 85);
       }
 
       if (elapsed < totalDurationMs) {

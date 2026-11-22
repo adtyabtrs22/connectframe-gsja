@@ -21,7 +21,8 @@ function drawImageCover(
   dy: number,
   dw: number,
   dh: number,
-  borderRadius = 16
+  borderRadius = 16,
+  filter?: string
 ) {
   const imgRatio = img.width / img.height;
   const boxRatio = dw / dh;
@@ -43,6 +44,7 @@ function drawImageCover(
   ctx.beginPath();
   ctx.roundRect(dx, dy, dw, dh, borderRadius);
   ctx.clip();
+  ctx.filter = filter && filter !== "none" ? filter : "none";
   ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
   ctx.restore();
 }
@@ -53,7 +55,7 @@ function drawImageCover(
 export async function renderPhotostripCanvas(
   frame: FrameTemplate,
   photoDataUrls: (string | null)[],
-  options?: { footerText?: string }
+  options?: { footerText?: string; filter?: string }
 ): Promise<HTMLCanvasElement> {
   const width = frame.canvasWidth || 1080;
   const height = frame.canvasHeight || 1920;
@@ -109,7 +111,7 @@ export async function renderPhotostripCanvas(
 
       const photoImg = loadedPhotos[layer.slotIndex];
       if (photoImg) {
-        drawImageCover(ctx, photoImg, dx, dy, dw, dh, frame.frameUrl ? 0 : 20);
+        drawImageCover(ctx, photoImg, dx, dy, dw, dh, frame.frameUrl ? 0 : 20, options?.filter);
       } else {
         ctx.fillStyle = "#E2E8F0";
         ctx.fillRect(dx, dy, dw, dh);
@@ -123,7 +125,7 @@ export async function renderPhotostripCanvas(
     ctx.fillStyle = isDark ? "#F8FAFC" : "#1E293B";
     ctx.font = "bold 40px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(options?.footerText || "CONNECTFRAME GSJA", width / 2, height - 125);
+    ctx.fillText(options?.footerText || "GSJA EL SHADDAI BATU KAJANG", width / 2, height - 125);
 
     ctx.fillStyle = isDark ? "#94A3B8" : "#64748B";
     ctx.font = "500 26px sans-serif";

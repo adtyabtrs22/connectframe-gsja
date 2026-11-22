@@ -9,15 +9,15 @@ export default function HomePage() {
       {/* Kartu Utama */}
       <div className="w-full max-w-md rounded-[2rem] border-4 border-slate-900 bg-white p-7 text-center shadow-[8px_8px_0px_#0f172a] sm:p-9">
         <div className="mx-auto mb-3 inline-flex items-center gap-1.5 rounded-full border-2 border-slate-900 bg-amber-300 px-4 py-1 text-xs font-extrabold uppercase tracking-wider text-slate-900">
-          <Sparkles className="h-3.5 w-3.5" />
-          ConnectFrame GSJA
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          GSJA El Shaddai Batu Kajang
         </div>
 
         <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
-          Abadikan Momen Bersama!
+          Terang Dalam Kegelapan
         </h1>
         <p className="mt-2 text-sm font-medium text-slate-600 sm:text-base">
-          Pilih frame favoritmu, foto 4 gaya seru, lalu simpan ke HP atau bagikan ke galeri gereja.
+          Abadikan momen sukacita Natal bersama! Pilih frame favoritmu, foto 4 gaya seru, lalu simpan ke HP atau bagikan ke galeri gereja.
         </p>
 
         {/* Tombol Kamera Utama */}
