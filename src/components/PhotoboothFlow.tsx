@@ -16,12 +16,15 @@ import {
   Sparkles,
   SwitchCamera,
   Upload,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { FrameTemplate } from "@/types/photobooth";
 import { fetchAllFrames, uploadGalleryPhoto } from "@/lib/supabase";
 import { compressCanvasForGallery, renderPhotostripCanvas } from "@/lib/canvas-utils";
 import { generatePhotostripVideo } from "@/lib/video-utils";
 import { getCssFilter, PHOTO_FILTERS, PhotoFilterId } from "@/lib/filters";
+import { playCountdownBeep, playShutterSound } from "@/lib/sound-utils";
 import { FramePreviewCard } from "@/components/FramePreviewCard";
 import { BUILT_IN_FRAMES } from "@/lib/default-frames";
 
@@ -35,12 +38,11 @@ export function PhotoboothFlow() {
 
   // Camera & 4-photo state
   const [photos, setPhotos] = useState<(string | null)[]>([null, null, null, null]);
-  const [photoVideos, setPhotoVideos] = useState<(Blob | null)[]>([null, null, null, null]);
-  const [slotMirrored, setSlotMirrored] = useState<boolean[]>([true, true, true, true]);
   const [activeSlot, setActiveSlot] = useState<number>(0);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isAutoSequence, setIsAutoSequence] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [flash, setFlash] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
@@ -60,7 +62,6 @@ export function PhotoboothFlow() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const resultCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const activeRecorderRef = useRef<MediaRecorder | null>(null);
 
   // Deteksi in-app browser (WhatsApp / IG / LINE)
   useEffect(() => {
@@ -155,20 +156,9 @@ export function PhotoboothFlow() {
 
     const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
 
-    // Hentikan perekaman klip video mulus untuk slot ini
-    if (activeRecorderRef.current && activeRecorderRef.current.state !== "inactive") {
-      activeRecorderRef.current.stop();
-      activeRecorderRef.current = null;
-    }
-
+    if (soundEnabled) playShutterSound();
     setFlash(true);
     setTimeout(() => setFlash(false), 200);
-
-    setSlotMirrored((prev) => {
-      const next = [...prev];
-      next[activeSlot] = facingMode === "user";
-      return next;
-    });
 
     setPhotos((prev) => {
       const next = [...prev];
@@ -192,77 +182,28 @@ export function PhotoboothFlow() {
       }
       return next;
     });
-  }, [activeSlot, facingMode, isAutoSequence]);
-
-  const startClipRecorder = useCallback((slotIdx: number) => {
-    const stream = streamRef.current;
-    if (!stream || typeof MediaRecorder === "undefined") return;
-
-    try {
-      if (activeRecorderRef.current && activeRecorderRef.current.state !== "inactive") {
-        activeRecorderRef.current.stop();
-      }
-      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp8")
-        ? "video/webm;codecs=vp8"
-        : MediaRecorder.isTypeSupported("video/webm")
-          ? "video/webm"
-          : MediaRecorder.isTypeSupported("video/mp4")
-            ? "video/mp4"
-            : "";
-
-      const recorder = mimeType
-        ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 1_200_000 })
-        : new MediaRecorder(stream);
-
-      const chunks: BlobPart[] = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
-        if (blob.size > 0) {
-          setPhotoVideos((prev) => {
-            const next = [...prev];
-            next[slotIdx] = blob;
-            return next;
-          });
-        }
-      };
-
-      activeRecorderRef.current = recorder;
-      recorder.start();
-    } catch {
-      // Abaikan jika perangkat tidak mendukung MediaRecorder paralel
-    }
-  }, []);
+  }, [activeSlot, facingMode, isAutoSequence, soundEnabled]);
 
   const handleStartAutoSession = () => {
     if (countdown !== null || isAutoSequence) return;
     const hasEmpty = photos.some((p) => p === null);
-    let targetSlot = activeSlot;
     if (hasEmpty) {
       const firstEmpty = photos.findIndex((p) => p === null);
       if (firstEmpty !== -1) {
-        targetSlot = firstEmpty;
         setActiveSlot(firstEmpty);
       }
       setIsAutoSequence(true);
     } else {
       setIsAutoSequence(false);
     }
-    startClipRecorder(targetSlot);
     setCountdown(3);
   };
 
-  // Saat auto-sequence berpindah ke slot berikutnya, mulai rekam klip untuk slot baru
-  useEffect(() => {
-    if (countdown === 3 && !activeRecorderRef.current) {
-      startClipRecorder(activeSlot);
-    }
-  }, [countdown, activeSlot, startClipRecorder]);
-
   useEffect(() => {
     if (countdown === null) return;
+    if (soundEnabled && countdown > 0) {
+      playCountdownBeep(countdown === 1);
+    }
     const timer = setTimeout(() => {
       if (countdown <= 1) {
         snapCurrentSlot();
@@ -270,9 +211,9 @@ export function PhotoboothFlow() {
       } else {
         setCountdown(countdown - 1);
       }
-    }, 950);
+    }, 900);
     return () => clearTimeout(timer);
-  }, [countdown, snapCurrentSlot]);
+  }, [countdown, snapCurrentSlot, soundEnabled]);
 
   // Fallback upload foto dari galeri HP jika kamera tidak bisa dibuka
   const handleManualPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -360,16 +301,9 @@ export function PhotoboothFlow() {
     setVideoProgress(0);
     try {
       const expandedPhotos = expandForFrame(photos, selectedFrame, randomOrder);
-      const expandedVideos = expandForFrame(photoVideos, selectedFrame, randomOrder);
-      const expandedMirrored =
-        selectedFrame.slots.length >= 8
-          ? [...slotMirrored, ...randomOrder.map((idx) => slotMirrored[idx] ?? true)]
-          : slotMirrored;
       const { blob, ext } = await generatePhotostripVideo(
         selectedFrame,
         expandedPhotos,
-        expandedVideos,
-        expandedMirrored,
         (pct) => setVideoProgress(pct),
         getCssFilter(selectedFilter)
       );
@@ -385,6 +319,29 @@ export function PhotoboothFlow() {
     } finally {
       setRecordingVideo(false);
       setVideoProgress(0);
+    }
+  };
+
+  const handleShareToApps = async () => {
+    if (!resultDataUrl) return;
+    try {
+      const res = await fetch(resultDataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `connectframe-gsja-${Date.now()}.png`, {
+        type: "image/png",
+      });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "ConnectFrame — GSJA El Shaddai Batu Kajang",
+          text: "Momen Natal: Terang Dalam Kegelapan ✨",
+        });
+        return;
+      }
+      handleDownloadHD();
+    } catch {
+      // Pengguna membatalkan share sheet
     }
   };
 
@@ -536,17 +493,33 @@ export function PhotoboothFlow() {
                   Pose {activeSlot + 1} dari 4
                 </div>
 
-                {/* Tombol Putar Kamera */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFacingMode((m) => (m === "user" ? "environment" : "user"))
-                  }
-                  className="absolute right-3 top-3 inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-900 shadow hover:bg-white"
-                >
-                  <SwitchCamera className="h-4 w-4" />
-                  Putar Kamera
-                </button>
+                {/* Tombol Suara & Putar Kamera */}
+                <div className="absolute right-3 top-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={soundEnabled ? "Matikan suara countdown" : "Nyalakan suara countdown"}
+                    onClick={() => setSoundEnabled((s) => !s)}
+                    className="inline-flex min-h-[42px] items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-900 shadow hover:bg-white"
+                  >
+                    {soundEnabled ? (
+                      <Volume2 className="h-4 w-4 text-sky-600" aria-hidden="true" />
+                    ) : (
+                      <VolumeX className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                    )}
+                    <span className="hidden sm:inline">{soundEnabled ? "Suara" : "Diam"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFacingMode((m) => (m === "user" ? "environment" : "user"))
+                    }
+                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-900 shadow hover:bg-white"
+                  >
+                    <SwitchCamera className="h-4 w-4" aria-hidden="true" />
+                    Putar Kamera
+                  </button>
+                </div>
 
                 {/* Error Kamera */}
                 {cameraError && (
@@ -619,7 +592,6 @@ export function PhotoboothFlow() {
                       setIsAutoSequence(false);
                       setCountdown(null);
                       setPhotos([null, null, null, null]);
-                      setPhotoVideos([null, null, null, null]);
                       setActiveSlot(0);
                     }}
                     className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline"
@@ -718,6 +690,16 @@ export function PhotoboothFlow() {
                   </span>
                 </button>
               </div>
+
+              <button
+                type="button"
+                disabled={!resultDataUrl}
+                onClick={handleShareToApps}
+                className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-5 py-3 text-sm font-extrabold text-emerald-900 transition hover:bg-emerald-100 disabled:opacity-50"
+              >
+                <Share2 className="h-4 w-4" aria-hidden="true" />
+                Bagikan ke WhatsApp / Simpan ke Galeri iPhone
+              </button>
 
               <div className="border-t border-slate-100 pt-4">
                 <label
@@ -831,7 +813,6 @@ export function PhotoboothFlow() {
                     setIsAutoSequence(false);
                     setCountdown(null);
                     setPhotos([null, null, null, null]);
-                    setPhotoVideos([null, null, null, null]);
                     setResultDataUrl(null);
                     setActiveSlot(0);
                     setStep("capture");
@@ -848,7 +829,6 @@ export function PhotoboothFlow() {
                     setIsAutoSequence(false);
                     setCountdown(null);
                     setPhotos([null, null, null, null]);
-                    setPhotoVideos([null, null, null, null]);
                     setResultDataUrl(null);
                     setActiveSlot(0);
                     setStep("select-frame");

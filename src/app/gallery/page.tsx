@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Camera, Download, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, Camera, Download, MonitorPlay, RefreshCw, X } from "lucide-react";
 import { fetchGalleryPhotos } from "@/lib/supabase";
 import { GalleryPhoto } from "@/types/photobooth";
 
@@ -66,6 +66,14 @@ export default function GalleryPage() {
           </Link>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/wall"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50"
+            >
+              <MonitorPlay className="h-4 w-4 text-amber-600" aria-hidden="true" />
+              <span className="hidden sm:inline">Live Proyektor</span>
+            </Link>
+
             <button
               type="button"
               onClick={loadPhotos}

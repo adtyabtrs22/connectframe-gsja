@@ -10,89 +10,58 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-function loadVideoClip(blob: Blob): Promise<{ video: HTMLVideoElement; url: string }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(blob);
-    const video = document.createElement("video");
-    video.src = url;
-    video.muted = true;
-    video.playsInline = true;
-    video.loop = true;
-    video.preload = "auto";
-
-    const onReady = () => {
-      cleanup();
-      resolve({ video, url });
-    };
-    const onErr = (e: Event) => {
-      cleanup();
-      URL.revokeObjectURL(url);
-      reject(e);
-    };
-    const cleanup = () => {
-      video.removeEventListener("loadeddata", onReady);
-      video.removeEventListener("error", onErr);
-    };
-
-    video.addEventListener("loadeddata", onReady);
-    video.addEventListener("error", onErr);
-    video.load();
-  });
-}
-
-function drawMediaCover(
+function drawImageCoverAnimated(
   ctx: CanvasRenderingContext2D,
-  media: HTMLImageElement | HTMLVideoElement,
-  mediaW: number,
-  mediaH: number,
+  img: HTMLImageElement,
   dx: number,
   dy: number,
   dw: number,
   dh: number,
-  borderRadius = 12,
-  mirror = false,
+  borderRadius: number,
+  zoom: number,
+  alpha: number,
   filter?: string
 ) {
-  if (!mediaW || !mediaH) return;
-  const imgRatio = mediaW / mediaH;
+  const imgRatio = img.width / img.height;
   const boxRatio = dw / dh;
   let sx = 0;
   let sy = 0;
-  let sw = mediaW;
-  let sh = mediaH;
+  let sw = img.width;
+  let sh = img.height;
 
   if (imgRatio > boxRatio) {
-    sw = mediaH * boxRatio;
-    sx = (mediaW - sw) / 2;
+    sw = img.height * boxRatio;
+    sx = (img.width - sw) / 2;
   } else {
-    sh = mediaW / boxRatio;
-    sy = (mediaH - sh) / 2;
+    sh = img.width / boxRatio;
+    sy = (img.height - sh) / 2;
   }
 
   ctx.save();
+  ctx.globalAlpha = alpha;
   ctx.beginPath();
   ctx.roundRect(dx, dy, dw, dh, borderRadius);
   ctx.clip();
   ctx.filter = filter && filter !== "none" ? filter : "none";
-  if (mirror) {
-    ctx.translate(dx + dw, dy);
-    ctx.scale(-1, 1);
-    ctx.drawImage(media, sx, sy, sw, sh, 0, 0, dw, dh);
-  } else {
-    ctx.drawImage(media, sx, sy, sw, sh, dx, dy, dw, dh);
-  }
+
+  // Zoom halus dari tengah kotak
+  const cx = dx + dw / 2;
+  const cy = dy + dh / 2;
+  ctx.translate(cx, cy);
+  ctx.scale(zoom, zoom);
+  ctx.translate(-cx, -cy);
+
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
   ctx.restore();
 }
 
 /**
- * Menghasilkan video 30 FPS mulus (MP4 / WebM) dari rekaman video asli
- * selama countdown 3 detik sebelum dijepret untuk masing-masing slot foto.
+ * Menghasilkan video animasi HD 30 FPS yang tajam & mulus di semua HP
+ * menggunakan 4 foto HD (tanpa decode 4 video paralel yang bikin lag).
  */
 export async function generatePhotostripVideo(
   frame: FrameTemplate,
   photoDataUrls: (string | null)[],
-  photoVideoBlobs: (Blob | null)[],
-  slotMirrored: boolean[],
   onProgress?: (pct: number) => void,
   filter?: string
 ): Promise<{ blob: Blob; ext: "mp4" | "webm" }> {
@@ -106,26 +75,12 @@ export async function generatePhotostripVideo(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas context tidak tersedia");
 
-  const [loadedPhotos, loadedVideos, frameImg] = await Promise.all([
+  const [loadedPhotos, frameImg] = await Promise.all([
     Promise.all(
       photoDataUrls.map((url) => (url ? loadImage(url).catch(() => null) : Promise.resolve(null)))
     ),
-    Promise.all(
-      photoVideoBlobs.map((blob) =>
-        blob ? loadVideoClip(blob).catch(() => null) : Promise.resolve(null)
-      )
-    ),
     frame.frameUrl ? loadImage(frame.frameUrl).catch(() => null) : Promise.resolve(null),
   ]);
-
-  // Mulai putar semua klip video secara bersamaan
-  await Promise.all(
-    loadedVideos.map(async (item) => {
-      if (!item) return;
-      item.video.currentTime = 0;
-      await item.video.play().catch(() => {});
-    })
-  );
 
   const mimeType = MediaRecorder.isTypeSupported("video/mp4")
     ? "video/mp4"
@@ -146,28 +101,15 @@ export async function generatePhotostripVideo(
     if (e.data.size > 0) chunks.push(e.data);
   };
 
-  // Rekam 6 detik (2x putaran klip 3 detik) pada 30 FPS mulus
-  const totalDurationMs = 6000;
+  // Durasi 5.4 detik: 4 pose muncul bertahap + zoom lembut + tahan hasil penuh di akhir
+  const totalDurationMs = 5400;
   const startTime = performance.now();
-
-  const cleanupVideos = () => {
-    for (const item of loadedVideos) {
-      if (item) {
-        item.video.pause();
-        URL.revokeObjectURL(item.url);
-      }
-    }
-  };
 
   return new Promise((resolve, reject) => {
     recorder.onstop = () => {
-      cleanupVideos();
       resolve({ blob: new Blob(chunks, { type: mimeType }), ext });
     };
-    recorder.onerror = (e) => {
-      cleanupVideos();
-      reject(e);
-    };
+    recorder.onerror = (e) => reject(e);
 
     recorder.start();
 
@@ -206,35 +148,26 @@ export async function generatePhotostripVideo(
           const dw = (slot.width / 100) * width;
           const dh = (slot.height / 100) * height;
 
-          const videoItem = loadedVideos[layer.slotIndex];
           const photoImg = loadedPhotos[layer.slotIndex];
+          // Untuk 8 slot (2x4), kolom kanan (4..7) muncul beriringan dengan barisnya (0..3)
+          const rowIndex = layer.slotIndex % 4;
+          const revealStart = rowIndex * 700;
+          const localT = Math.min(1, Math.max(0, (elapsed - revealStart) / 550));
+          // Easing smooth cubic-out
+          const eased = 1 - Math.pow(1 - localT, 3);
+          const zoom = 1.06 - 0.06 * eased + Math.sin(progress * Math.PI) * 0.02;
 
-          if (videoItem && videoItem.video.readyState >= 2) {
-            drawMediaCover(
-              ctx,
-              videoItem.video,
-              videoItem.video.videoWidth,
-              videoItem.video.videoHeight,
-              dx,
-              dy,
-              dw,
-              dh,
-              frameImg ? 0 : 18,
-              Boolean(slotMirrored[layer.slotIndex]),
-              filter
-            );
-          } else if (photoImg) {
-            drawMediaCover(
+          if (photoImg && elapsed >= revealStart) {
+            drawImageCoverAnimated(
               ctx,
               photoImg,
-              photoImg.width,
-              photoImg.height,
               dx,
               dy,
               dw,
               dh,
               frameImg ? 0 : 18,
-              false,
+              zoom,
+              eased,
               filter
             );
           } else {
