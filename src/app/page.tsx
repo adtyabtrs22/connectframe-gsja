@@ -14,7 +14,7 @@ export default function HomePage() {
         </div>
 
         <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
-          Terang Dalam Kegelapan
+          Terang Di Dalam Kegelapan
         </h1>
         <p className="mt-2 text-sm font-medium text-slate-600 sm:text-base">
           Abadikan momen sukacita Natal bersama! Pilih frame favoritmu, foto 4 gaya seru, lalu simpan ke HP atau bagikan ke galeri gereja.

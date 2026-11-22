@@ -335,7 +335,7 @@ export function PhotoboothFlow() {
         await navigator.share({
           files: [file],
           title: "ConnectFrame — GSJA El Shaddai Batu Kajang",
-          text: "Momen Natal: Terang Dalam Kegelapan ✨",
+          text: "Momen Natal: Terang Di Dalam Kegelapan ✨",
         });
         return;
       }
@@ -471,9 +471,8 @@ export function PhotoboothFlow() {
                   autoPlay
                   playsInline
                   muted
-                  className={`h-full w-full object-cover ${
-                    facingMode === "user" ? "-scale-x-100" : ""
-                  }`}
+                  className={`h-full w-full object-cover ${facingMode === "user" ? "-scale-x-100" : ""
+                    }`}
                 />
 
                 {/* Overlay Countdown */}
@@ -610,11 +609,10 @@ export function PhotoboothFlow() {
                       key={idx}
                       type="button"
                       onClick={() => setActiveSlot(idx)}
-                      className={`relative aspect-[4/3] overflow-hidden rounded-2xl border-2 transition ${
-                        isActive
-                          ? "border-sky-500 ring-4 ring-sky-200"
-                          : "border-slate-200 bg-white"
-                      }`}
+                      className={`relative aspect-[4/3] overflow-hidden rounded-2xl border-2 transition ${isActive
+                        ? "border-sky-500 ring-4 ring-sky-200"
+                        : "border-slate-200 bg-white"
+                        }`}
                     >
                       {photo ? (
                         <img
@@ -768,11 +766,10 @@ export function PhotoboothFlow() {
                         setSelectedFilter(f.id);
                         generateResult(selectedFrame, undefined, f.id);
                       }}
-                      className={`min-h-[42px] rounded-xl border px-3 py-2 text-xs font-bold transition ${
-                        selectedFilter === f.id
-                          ? "border-sky-500 bg-sky-50 text-sky-800 ring-2 ring-sky-200"
-                          : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                      }`}
+                      className={`min-h-[42px] rounded-xl border px-3 py-2 text-xs font-bold transition ${selectedFilter === f.id
+                        ? "border-sky-500 bg-sky-50 text-sky-800 ring-2 ring-sky-200"
+                        : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                        }`}
                     >
                       {f.label}
                     </button>
@@ -794,11 +791,10 @@ export function PhotoboothFlow() {
                         setSelectedFrame(f);
                         generateResult(f);
                       }}
-                      className={`rounded-xl border px-3 py-2 text-xs font-bold transition ${
-                        selectedFrame.id === f.id
-                          ? "border-sky-500 bg-sky-50 text-sky-700"
-                          : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                      }`}
+                      className={`rounded-xl border px-3 py-2 text-xs font-bold transition ${selectedFrame.id === f.id
+                        ? "border-sky-500 bg-sky-50 text-sky-700"
+                        : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                        }`}
                     >
                       {f.name}
                     </button>

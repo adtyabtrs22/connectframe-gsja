@@ -34,10 +34,10 @@ export default function LiveWallPage() {
 
   const toggleFullscreen = async () => {
     if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen().catch(() => {});
+      await document.documentElement.requestFullscreen().catch(() => { });
       setIsFullscreen(true);
     } else {
-      await document.exitFullscreen().catch(() => {});
+      await document.exitFullscreen().catch(() => { });
       setIsFullscreen(false);
     }
   };
@@ -60,7 +60,7 @@ export default function LiveWallPage() {
               ConnectFrame • GSJA El Shaddai Batu Kajang
             </div>
             <h1 className="text-xl font-black tracking-tight text-white sm:text-2xl">
-              Natal: Terang Dalam Kegelapan
+              Natal: Terang Di Dalam Kegelapan
             </h1>
           </div>
         </div>
